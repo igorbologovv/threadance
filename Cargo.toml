@@ -1,0 +1,16 @@
+[package]
+name = "threadance"
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Igor Bologov"]
+description = "A configurable Rust thread pool with composable queue topologies and wake policies"
+license = "Apache-2.0"
+repository = "https://github.com/igorbologovv/threadance"
+readme = "README.md"
+keywords = ["thread-pool", "concurrency", "scheduler", "threads"]
+categories = ["concurrency"]
+
+[dependencies]
+atomic-wait = "1.1.0"
+crossbeam-channel = "0.5.17"
