@@ -1,4 +1,5 @@
 mod queue;
+mod segmented;
 mod wake;
 
 use std::{
@@ -14,6 +15,10 @@ use std::{
 };
 
 pub use queue::{CrossbeamMpmc, QueuePop, QueueTopology, TaskConsumer, TaskProducer};
+pub use segmented::{
+    SegmentedIdle, SegmentedProducer, SegmentedThreadPool, SegmentedTopology, SegmentedWake,
+    SegmentedWakePolicy,
+};
 pub use wake::{AgaveBackoff, CrossbeamWait, SpinThenPark, WaitResult, WakePolicy};
 
 pub type Task = Box<dyn FnOnce() + Send + 'static>;

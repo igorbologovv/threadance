@@ -63,6 +63,39 @@ In other words, the selected wake policy must explicitly support the consumer ty
 
 The trait system can enforce API compatibility; implementations are still responsible for the concurrency semantics and memory-ordering guarantees required by their protocol.
 
+## Experimental single-producer segmented topologies
+
+The experimental segmented API lives alongside the existing MPMC API; it does
+not change ThreadPool, TaskProducer, or WakePolicy.
+
+A segmented topology implements SegmentedTopology and returns one
+SegmentedProducer plus one TaskConsumer for each worker. The producer owns
+its cursor and returns the destination worker index when it accepts a task.
+SegmentedThreadPool forwards that index to SegmentedWakePolicy::wake(index),
+rather than guessing which sleeping worker owns the task. A built-in
+SegmentedWake supports addressed SpinThenPark and AgaveBackoff waiting.
+
+SegmentedThreadPool::execute takes &mut self, intentionally enforcing a
+single active producer without a global submission mutex. Task execution
+still happens concurrently on worker threads. Applications that need
+concurrent producers should choose the MPMC API or explicitly add their
+own serialization; the segmented API does not secretly provide MPSC.
+
+The pool does not allocate or manage queue slots: a concrete topology
+can use a single contiguous buffer divided into per-worker SPSC rings,
+with raw pointers, gate routing, and its own backpressure policy. That
+hot-first algorithm belongs in the benchmark harness initially, **not**
+in the reusable Threadance API. The library still boxes each task using
+the existing Task type; the segmented infrastructure does not add a
+second per-task wrapper.
+
+**Lifecycle contract:** dropping the producer must make consumers
+eventually return Disconnected after accepted work has been drained.
+The provided SegmentedWake must be constructed with the same worker
+count as the pool; its per-worker park/unpark handles are registered
+before the final queue probe, avoiding lost wakeups during startup.
+
+
 ## Current components
 
 | Queue topology | `CrossbeamWait` | `SpinThenPark` | `AgaveBackoff` |
